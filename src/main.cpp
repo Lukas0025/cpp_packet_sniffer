@@ -19,7 +19,7 @@ typedef struct {
     bool   icmp           = false;
     bool   arp            = false;
     bool   filter         = false;
-    int    count          = -1;
+    int    count          = 1;
 } config;
 
 const struct option longopts[] = {
@@ -84,6 +84,11 @@ int main(int argc, char * argv[]) {
                 session.icmp = true;
                 session.filter = true;
                 continue;
+            case 'n':
+                session.count = atoi(optarg);
+                continue;
+            case 'h':
+                continue;
             default:
                 if (optopt == 'i') {
                     session.inited = true;
@@ -105,6 +110,38 @@ int main(int argc, char * argv[]) {
         print_if();
         return 0;
     }
+
+    //init sniffer on interface
+    sniffer *session_sniffer;
+    try {
+        session_sniffer = new sniffer(session.interface);
+    } catch (std::runtime_error& e) {
+        fprintf(stderr, "[error] when try open sniffer: %s\n", e.what());
+        return 1;
+    }
+
+    //session_sniffer->set_filter("port 22");
+
+    for (int i = 0; i < session.count; i++) {
+        auto l1_pack = session_sniffer->sniff();
+        auto l3_pack = session_sniffer->l3_decode(l1_pack);
+
+        //print main info
+        printf(
+            "%s %s : %d > %s : %d, length %d bytes\n",
+            "time", //time
+            session_sniffer->get_src(l3_pack).c_str(), //src IP
+            0, // src port
+            session_sniffer->get_dst(l3_pack).c_str(), //dst IP
+            0, //dst port
+            l1_pack.header.len //packet len in bytes
+        );
+
+        session_sniffer->hex_dump(l1_pack.body, l1_pack.header.len);
+        printf("\n");
+    }
+
+    delete session_sniffer;
     
     return 0;
 }
