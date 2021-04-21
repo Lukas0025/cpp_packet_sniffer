@@ -18,6 +18,16 @@ std::vector<std::string> sniffer::devices() {
     }
 
     for (pcap_if_t *dev = alldevs; dev != NULL; dev = dev->next) {
+        auto interface = pcap_open_live(dev->name, BUFSIZ, 1, 1000, errbuf);
+        
+        if (interface == NULL) {
+            continue;
+        }
+        
+        if (pcap_datalink(interface) != DLT_EN10MB) {
+            continue;
+        }
+
         devs_vector.push_back(dev->name);
     }
     
@@ -64,9 +74,68 @@ l3_packet sniffer::l3_decode(l1_packet packet) {
         decode.ipv6     = true;
         decode.body     = packet.body + sizeof(struct ether_header) + sizeof(struct ip6_hdr);
         decode.body_len = packet.header.len - (sizeof(struct ether_header) + sizeof(struct ip6_hdr));
+    } else if (ntohs(ether_hdr->ether_type) == ETHERTYPE_ARP) { //ARP
+        decode.arp_hdr = (struct arp_header *)(packet.body + sizeof(struct ether_header));
+        decode.arp     = true;
     }
     
     return decode;
+}
+
+int sniffer::get_protocol(l3_packet packet) {
+    if (packet.ipv4) {
+        return packet.ipv4_hdr->ip_p;
+    } else if (packet.ipv6) {
+        if (packet.ipv6_hdr->ip6_ctlun.ip6_un1.ip6_un1_nxt)
+        return packet.ipv6_hdr->ip6_ctlun.ip6_un1.ip6_un1_nxt;
+    } else if (packet.arp) {
+        return ARP_PROT;
+    }
+
+    return UNDEF_PROT;
+}
+
+
+l4_packet sniffer::l4_decode(l3_packet packet) {
+    l4_packet decode;
+    int protocol = this->get_protocol(packet);
+
+    if (protocol == IPPROTO_TCP) {
+        decode.tcp_hdr  = (tcphdr*)packet.body;
+        decode.tcp      = true;
+        decode.body     = packet.body + sizeof(struct tcphdr);
+        decode.body_len = packet.body_len - sizeof(struct tcphdr);
+    } else if (protocol == IPPROTO_UDP) {
+        decode.udp_hdr  = (udphdr*)packet.body;
+        decode.udp      = true;
+        decode.body     = packet.body + sizeof(struct udphdr);
+        decode.body_len = packet.body_len - sizeof(struct udphdr);
+    } else if (protocol == IPPROTO_ICMPV6 || protocol == IPPROTO_ICMP) {
+        decode.icmp     = true;
+    }
+
+    return decode;
+}
+
+
+uint16_t sniffer::get_dst_port(l4_packet packet) {
+    if (packet.tcp) {
+        return ntohs(packet.tcp_hdr->th_dport);
+    } else if (packet.udp) {
+        return ntohs(packet.udp_hdr->uh_dport);
+    }
+
+    return 0;
+}
+
+uint16_t sniffer::get_src_port(l4_packet packet) {
+    if (packet.tcp) {
+        return ntohs(packet.tcp_hdr->th_sport);
+    } else if (packet.udp) {
+        return ntohs(packet.udp_hdr->uh_sport);
+    }
+
+    return 0;
 }
 
 std::string sniffer::get_src(l3_packet packet) {
@@ -79,6 +148,19 @@ std::string sniffer::get_src(l3_packet packet) {
     } else if (packet.ipv6) {
         char tmp[INET6_ADDRSTRLEN];
         inet_ntop(AF_INET6, &(packet.ipv6_hdr->ip6_src), tmp, INET6_ADDRSTRLEN);
+        addr = tmp;
+    } else if (packet.arp) {
+        char tmp[MAC_ADDR_STRLEN];
+        sprintf(
+            tmp,
+            "%02X:%02X:%02X:%02X:%02X:%02X",
+            packet.arp_hdr->src_mac[0],
+            packet.arp_hdr->src_mac[1],
+            packet.arp_hdr->src_mac[2],
+            packet.arp_hdr->src_mac[3],
+            packet.arp_hdr->src_mac[4],
+            packet.arp_hdr->src_mac[5]
+        );  
         addr = tmp;
     }
 
@@ -95,6 +177,19 @@ std::string sniffer::get_dst(l3_packet packet) {
     } else if (packet.ipv6) {
         char tmp[INET6_ADDRSTRLEN];
         inet_ntop(AF_INET6, &(packet.ipv6_hdr->ip6_dst), tmp, INET6_ADDRSTRLEN);
+        addr = tmp;
+    } else if (packet.arp) {
+        char tmp[MAC_ADDR_STRLEN];
+        sprintf(
+            tmp,
+            "%02X:%02X:%02X:%02X:%02X:%02X",
+            packet.arp_hdr->dst_mac[0],
+            packet.arp_hdr->dst_mac[1],
+            packet.arp_hdr->dst_mac[2],
+            packet.arp_hdr->dst_mac[3],
+            packet.arp_hdr->dst_mac[4],
+            packet.arp_hdr->dst_mac[5]
+        );  
         addr = tmp;
     }
 

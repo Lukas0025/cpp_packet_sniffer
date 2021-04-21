@@ -9,17 +9,19 @@
 #include <string.h>
 #include <getopt.h> //getopt_long
 #include <iostream> //print_f
+#include <time.h>
+#include <stdio.h>
 
 typedef struct {
     std::string interface;
-    bool   inited         = false;
-    int    port           = -1;
-    bool   tcp            = false;
-    bool   udp            = false;
-    bool   icmp           = false;
-    bool   arp            = false;
-    bool   filter         = false;
-    int    count          = 1;
+    bool        inited         = false;
+    std::string port;
+    bool        tcp            = false;
+    bool        udp            = false;
+    bool        icmp           = false;
+    bool        arp            = false;
+    bool        filter         = false;
+    int         count          = 1;
 } config;
 
 const struct option longopts[] = {
@@ -31,6 +33,32 @@ const struct option longopts[] = {
     {"icmp",      no_argument,        0, 'y'},
     {0,0,0,0},
 };
+
+void print_time() {
+    
+    time_t now = time(NULL);
+    struct tm *tm;
+    int off_sign;
+    int off;
+
+    if ((tm = localtime(&now)) == NULL) {
+        return;
+    }
+    
+    off_sign = '+';
+    
+    off = (int) tm->tm_gmtoff;
+
+    if (tm->tm_gmtoff < 0) {
+        off_sign = '-';
+        off = -off;
+    }
+
+    printf("%d-%d-%dT%02d:%02d:%02d%c%02d:%02d",
+           tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+           tm->tm_hour, tm->tm_min, tm->tm_sec,
+           off_sign, off / 3600, off % 3600);
+}
 
 void help() {
     printf("Packet sniffer with basic filters support\n\n");
@@ -66,7 +94,7 @@ int main(int argc, char * argv[]) {
                 session.inited = true;
                 continue;
             case 'p': 
-                session.port = atoi(optarg);
+                session.port = optarg;
                 continue;
             case 't':
                 session.tcp = true;
@@ -120,22 +148,61 @@ int main(int argc, char * argv[]) {
         return 1;
     }
 
-    //session_sniffer->set_filter("port 22");
+    if (!session.port.empty()) {
+        std::string filter;
+
+        filter  = "port ";
+        filter += session.port;
+
+        session_sniffer->set_filter(filter);
+    }
 
     for (int i = 0; i < session.count; i++) {
         auto l1_pack = session_sniffer->sniff();
         auto l3_pack = session_sniffer->l3_decode(l1_pack);
+        int protocol = session_sniffer->get_protocol(l3_pack);
 
-        //print main info
-        printf(
-            "%s %s : %d > %s : %d, length %d bytes\n",
-            "time", //time
-            session_sniffer->get_src(l3_pack).c_str(), //src IP
-            0, // src port
-            session_sniffer->get_dst(l3_pack).c_str(), //dst IP
-            0, //dst port
-            l1_pack.header.len //packet len in bytes
-        );
+        //no TCP, UDP, ARP or ICMP
+        if (protocol != IPPROTO_TCP &&
+            protocol != IPPROTO_UDP &&
+            protocol != IPPROTO_ICMP &&
+            protocol != IPPROTO_ICMPV6 &&
+            protocol != ARP_PROT) {
+            i--;
+            continue;
+        }
+
+        //filter by protocol type
+        if (session.filter) {
+            if ((!session.tcp  && protocol == IPPROTO_TCP) ||
+                (!session.udp  && protocol == IPPROTO_UDP) ||
+                (!session.icmp && protocol == IPPROTO_ICMP) ||
+                (!session.icmp && protocol == IPPROTO_ICMPV6) ||
+                (!session.arp  && protocol == ARP_PROT)) {
+                    i--;
+                    continue;
+                }
+        }
+
+        auto l4_pack = session_sniffer->l4_decode(l3_pack);
+
+        //print main info: %s %s : %d > %s : %d, length %d bytes
+        //printf("%s", (date::format("%FT%TZ", time_point_cast<milliseconds>(system_clock::now()))).c_str()); 
+        print_time();
+        printf(" %s", session_sniffer->get_src(l3_pack).c_str());
+        
+        if (!l3_pack.arp && !l4_pack.icmp) {
+            printf(" : %u", session_sniffer->get_src_port(l4_pack));
+        }
+
+        printf(" > ");
+        printf("%s", session_sniffer->get_dst(l3_pack).c_str());
+        
+        if (!l3_pack.arp && !l4_pack.icmp) {
+            printf(" : %u",  session_sniffer->get_dst_port(l4_pack));
+        }
+        
+        printf(", length %d bytes\n", l1_pack.header.len);
 
         session_sniffer->hex_dump(l1_pack.body, l1_pack.header.len);
         printf("\n");

@@ -17,6 +17,27 @@
 #include <netinet/udp.h>
 #include <arpa/inet.h>
 
+#define MAC_LENGTH 6
+#define IPV4_LENGTH 4
+#define ARP_PROT -1
+#define UNDEF_PROT -2
+#define MAC_ADDR_STRLEN 18
+
+/**
+ * ARP header by https://en.wikipedia.org/wiki/Address_Resolution_Protocol
+ */
+struct arp_header {
+    u_short hw_type;
+    u_short prot_type;
+    u_char  hw_len;
+    u_char  prot_len;
+    u_short opcode;
+    u_char  src_mac[MAC_LENGTH];
+    u_char  src_ip[IPV4_LENGTH];
+    u_char  dst_mac[MAC_LENGTH];
+    u_char  dst_ip[IPV4_LENGTH];
+};
+
 typedef struct {
     //raw pcap data
     struct pcap_pkthdr header;
@@ -27,15 +48,33 @@ typedef struct {
     //Decoded info
     bool ipv4 = false;
     bool ipv6 = false;
+    bool arp  = false;
 
     //IP Headers
     struct ip6_hdr* ipv6_hdr;
     struct ip*      ipv4_hdr;
 
+    //ARP
+    struct arp_header* arp_hdr;
+
     //body
     const u_char *body;
     uint body_len;
 } l3_packet;
+
+typedef struct {
+    bool tcp;
+    bool udp;
+    bool icmp;
+
+    //headers
+    struct tcphdr* tcp_hdr;
+    struct udphdr* udp_hdr;
+
+    //body
+    const u_char *body;
+    uint body_len;
+} l4_packet;
 
 class sniffer {
     public:
@@ -59,6 +98,36 @@ class sniffer {
          * @return L3 packet
          */
         l3_packet l3_decode(l1_packet packet);
+
+        /**
+         * L4 decoder decode L3 to L4 packet
+         * @param packet - L3 packet to decode
+         * @return L4 packet
+         */
+        l4_packet l4_decode(l3_packet packet);
+
+        /**
+         * get IP protocol from IP packet
+         * @param packet - L3 packet
+         * @return int IP type
+         */
+        int get_protocol(l3_packet packet);
+
+        /**
+         * Get port of destination
+         * @param packet - L4 packet
+         * @pre check if is UDP or TCP packet
+         * @return port number if no port return 0
+         */
+        uint16_t get_dst_port(l4_packet packet);
+
+        /**
+         * Get port of source
+         * @param packet - L4 packet
+         * @pre check if is UDP or TCP packet
+         * @return port number if no port return 0
+         */
+        uint16_t get_src_port(l4_packet packet);
 
         /**
          * Return src IP of l3 packet
