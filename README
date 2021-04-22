@@ -73,5 +73,4 @@ make uninstall
 * `debug-build` - build source code to binary file with debug informations
 * `install`     - install builded file to system
 * `uninstall`   - uninstall builded file from system
-* `test`        - run simple auto tests
 * `clean`       - clean repo
