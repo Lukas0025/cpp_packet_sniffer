@@ -36,7 +36,8 @@ const struct option longopts[] = {
 
 /**
  * Print current time in RFC3339 format
- * from: https://gist.github.com/jedisct1/b7812ae9b4850e0053a21c922ed3e9dc under MIT
+ * "rfc3339.c" by Frank Denis (jedisct1) is licensed under CC0 license
+ * from: https://gist.github.com/jedisct1/b7812ae9b4850e0053a21c922ed3e9dc
  */
 void print_RFC3339_time() {
     
