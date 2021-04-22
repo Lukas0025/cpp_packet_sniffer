@@ -10,8 +10,9 @@ install:
 uninstall:
 	rm  /usr/bin/ipk-sniffer
 
-test:
-	cd ./spec/tests && ./tests.sh
+tar: clean
+	tar -cf xpleva07.tar *
 
 clean:
 	rm -f ipk-sniffer
+	rm -f xpleva07.tar
