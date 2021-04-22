@@ -34,7 +34,11 @@ const struct option longopts[] = {
     {0,0,0,0},
 };
 
-void print_time() {
+/**
+ * Print current time in RFC3339 format
+ * from: https://gist.github.com/jedisct1/b7812ae9b4850e0053a21c922ed3e9dc under MIT
+ */
+void print_RFC3339_time() {
     
     time_t now = time(NULL);
     struct tm *tm;
@@ -60,6 +64,9 @@ void print_time() {
            off_sign, off / 3600, off % 3600);
 }
 
+/**
+ * Print cli help on STOUT
+ */
 void help() {
     printf("Packet sniffer with basic filters support\n\n");
     printf("./ipk-sniffer [-i interface_name | --interface interface_name] {-p ­­port} {[--tcp|-t] [--udp|-u] [--arp] [--icmp] } {-n num}\n\n");
@@ -74,6 +81,9 @@ void help() {
     printf("-h, --help       - print this\n");
 }
 
+/**
+ * Print interfaces to STDOUT
+ */
 void print_if() {
     auto devs = sniffer::devices();
 
@@ -134,7 +144,6 @@ int main(int argc, char * argv[]) {
     
     //interface is set but its empty
     if (session.interface.empty()) {
-        printf("\ninterfaces list for argument:\n\n");
         print_if();
         return 0;
     }
@@ -148,15 +157,22 @@ int main(int argc, char * argv[]) {
         return 1;
     }
 
+    //filter by port
     if (!session.port.empty()) {
         std::string filter;
 
         filter  = "port ";
         filter += session.port;
 
-        session_sniffer->set_filter(filter);
+        try {
+            session_sniffer->set_filter(filter);
+        } catch (std::runtime_error& e) {
+            fprintf(stderr, "[error] when try set port filter: %s\n", e.what());
+            return 1;
+        }
     }
 
+    //read N pockets
     for (int i = 0; i < session.count; i++) {
         auto l1_pack = session_sniffer->sniff();
         auto l3_pack = session_sniffer->l3_decode(l1_pack);
@@ -187,8 +203,7 @@ int main(int argc, char * argv[]) {
         auto l4_pack = session_sniffer->l4_decode(l3_pack);
 
         //print main info: %s %s : %d > %s : %d, length %d bytes
-        //printf("%s", (date::format("%FT%TZ", time_point_cast<milliseconds>(system_clock::now()))).c_str()); 
-        print_time();
+        print_RFC3339_time();
         printf(" %s", session_sniffer->get_src(l3_pack).c_str());
         
         if (!l3_pack.arp && !l4_pack.icmp) {

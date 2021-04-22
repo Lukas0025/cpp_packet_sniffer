@@ -220,17 +220,17 @@ void sniffer::hex_dump(const u_char* bytes, const int len) {
         if (i % 16 == 0) {
 
             if (i != 0)
-                printf ("   %s\n", ascii); //print ASCII decoded in end of line
+                printf("   %s\n", ascii); //print ASCII decoded in end of line
 
             //print line/byte number
-            printf ("  Ox%04x ", i); 
+            printf("  Ox%04x ", i); 
         }
 
-        printf (" %02x", bytes[i]);
+        printf(" %02x", bytes[i]);
 
         //print space in center
         if (i % 16 == 7) {
-            printf (" ");
+            printf(" ");
         }
 
         //add ASCII to tmp to print in end of line
@@ -250,17 +250,21 @@ void sniffer::hex_dump(const u_char* bytes, const int len) {
         
         //print space in center
         if (i % 16 == 7) {
-            printf (" ");
+            printf(" ");
         }
 
         i++;
     }
 
-    printf ("   %s\n", ascii);
+    printf("   %s\n", ascii);
 }
 
 l1_packet sniffer::sniff() {
     l1_packet packet;
     packet.body = pcap_next(this->interface, &packet.header);
     return packet;
+}
+
+sniffer::~sniffer() {
+    //free here
 }

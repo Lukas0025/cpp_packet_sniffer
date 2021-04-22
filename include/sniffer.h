@@ -24,7 +24,8 @@
 #define MAC_ADDR_STRLEN 18
 
 /**
- * ARP header by https://en.wikipedia.org/wiki/Address_Resolution_Protocol
+ * ARP protocol header
+ * header by https://en.wikipedia.org/wiki/Address_Resolution_Protocol (April 2021)
  */
 struct arp_header {
     u_short hw_type;
@@ -149,6 +150,11 @@ class sniffer {
          * @return sniffer object
          */
         sniffer(std::string interface);
+
+        /**
+         * Object descructor - free all resources
+         */
+        ~sniffer();
 
         /**
          * Set filter to sniffer
