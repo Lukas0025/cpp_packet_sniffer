@@ -1,4 +1,4 @@
-# cpp_packet_sniffer
+# CPP Packet Sniffer
 Project ZETA to BUT FIT IPK 2021, packet sniffer with basic filters support. Sniff packet show destion and source port/address and payload using HexDump.
 
 ## using
@@ -66,3 +66,12 @@ Remove `/usr/bin/ipk-sniffer` from system
 ```sh
 make uninstall
 ```
+
+## Makefile targets
+
+* `build`       - build source code to binary file
+* `debug-build` - build source code to binary file with debug informations
+* `install`     - install builded file to system
+* `uninstall`   - uninstall builded file from system
+* `test`        - run simple auto tests
+* `clean`       - clean repo
