@@ -98,7 +98,7 @@ int main(int argc, char * argv[]) {
 
     //get cli parametrs
     int c, option_index;
-    while ((c = getopt_long(argc, argv, "i:p:tun:h", longopts, &option_index)) != -1) {
+    while ((c = getopt_long(argc, argv, ":i:p:tun:h", longopts, &option_index)) != -1) {
         switch (c) {
             case 'i': 
                 session.interface = optarg;
@@ -132,6 +132,7 @@ int main(int argc, char * argv[]) {
                 if (optopt == 'i') {
                     session.inited = true;
                 } else {
+                    fprintf(stderr, "fail to parse arguments. type --help or -h for help\n");
                     return 1;
                 }
         }
