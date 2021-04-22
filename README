@@ -74,3 +74,13 @@ make uninstall
 * `install`     - install builded file to system
 * `uninstall`   - uninstall builded file from system
 * `clean`       - clean repo
+
+## Forders
+
+* `spec`       - project specification forder
+* `include`    - forder with headers files
+* `src`        - forder with source codes (C++)
+
+## Documenation
+ 
+This project is my semestral project to IPK at BUT FIT, more specific documentation you can find in documentaion file or in spec forder (CZ Only)
