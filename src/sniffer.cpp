@@ -59,22 +59,22 @@ l3_packet sniffer::l3_decode(l1_packet packet) {
     l3_packet decode;
 
     //load packet as ETHERNET (L2)
-    struct ether_header* ether_hdr = (struct ether_header*) packet.body;
+    decode.ether_hdr = (struct ether_header*) packet.body;
 
     //load next protocol in packet
-    if (ntohs(ether_hdr->ether_type) == ETHERTYPE_IP) { //IPv4
+    if (ntohs(decode.ether_hdr->ether_type) == ETHERTYPE_IP) { //IPv4
         //IP header is after ETHERNET
         decode.ipv4_hdr = (struct ip*)(packet.body + sizeof(struct ether_header));
         decode.ipv4     = true;
         decode.body     = packet.body + sizeof(struct ether_header) + sizeof(struct ip);
         decode.body_len = packet.header.len - (sizeof(struct ether_header) + sizeof(struct ip));
-    } else if (ntohs(ether_hdr->ether_type) == ETHERTYPE_IPV6) { //IPv6
+    } else if (ntohs(decode.ether_hdr->ether_type) == ETHERTYPE_IPV6) { //IPv6
         //IP header is after ETHERNET
         decode.ipv6_hdr = (struct ip6_hdr*)(packet.body + sizeof(struct ether_header));
         decode.ipv6     = true;
         decode.body     = packet.body + sizeof(struct ether_header) + sizeof(struct ip6_hdr);
         decode.body_len = packet.header.len - (sizeof(struct ether_header) + sizeof(struct ip6_hdr));
-    } else if (ntohs(ether_hdr->ether_type) == ETHERTYPE_ARP) { //ARP
+    } else if (ntohs(decode.ether_hdr->ether_type) == ETHERTYPE_ARP) { //ARP
         decode.arp_hdr = (struct arp_header *)(packet.body + sizeof(struct ether_header));
         decode.arp     = true;
     }
@@ -154,12 +154,12 @@ std::string sniffer::get_src(l3_packet packet) {
         sprintf(
             tmp,
             "%02X:%02X:%02X:%02X:%02X:%02X",
-            packet.arp_hdr->src_mac[0],
-            packet.arp_hdr->src_mac[1],
-            packet.arp_hdr->src_mac[2],
-            packet.arp_hdr->src_mac[3],
-            packet.arp_hdr->src_mac[4],
-            packet.arp_hdr->src_mac[5]
+            packet.ether_hdr->ether_shost[0],
+            packet.ether_hdr->ether_shost[1],
+            packet.ether_hdr->ether_shost[2],
+            packet.ether_hdr->ether_shost[3],
+            packet.ether_hdr->ether_shost[4],
+            packet.ether_hdr->ether_shost[5]
         );  
         addr = tmp;
     }
@@ -183,12 +183,12 @@ std::string sniffer::get_dst(l3_packet packet) {
         sprintf(
             tmp,
             "%02X:%02X:%02X:%02X:%02X:%02X",
-            packet.arp_hdr->dst_mac[0],
-            packet.arp_hdr->dst_mac[1],
-            packet.arp_hdr->dst_mac[2],
-            packet.arp_hdr->dst_mac[3],
-            packet.arp_hdr->dst_mac[4],
-            packet.arp_hdr->dst_mac[5]
+            packet.ether_hdr->ether_dhost[0],
+            packet.ether_hdr->ether_dhost[1],
+            packet.ether_hdr->ether_dhost[2],
+            packet.ether_hdr->ether_dhost[3],
+            packet.ether_hdr->ether_dhost[4],
+            packet.ether_hdr->ether_dhost[5]
         );  
         addr = tmp;
     }

@@ -53,7 +53,7 @@ typedef struct {
 } l1_packet;
 
 /**
- * Packet on layer 3 with layer 2 support for ARP
+ * Packet on layer 3 with layer 2 support for ARP and ETHERNET header
  */
 typedef struct {
     //Decoded info
@@ -67,6 +67,9 @@ typedef struct {
 
     //ARP
     struct arp_header* arp_hdr;
+
+    //ether header
+    struct ether_header* ether_hdr;
 
     //body
     const u_char *body;
