@@ -9,12 +9,16 @@
 #include <pcap/pcap.h>
 #include <string>
 #include <vector>
+
+/** Headers scructs of protocols */
 #include <net/ethernet.h>
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
+
+/** Convert functions for packets */
 #include <arpa/inet.h>
 
 #define MAC_LENGTH 6
@@ -39,12 +43,18 @@ struct arp_header {
     u_char  dst_ip[IPV4_LENGTH];
 };
 
+/**
+ * Packet on layer 1
+ */
 typedef struct {
     //raw pcap data
     struct pcap_pkthdr header;
     const u_char *body;
 } l1_packet;
 
+/**
+ * Packet on layer 3 with layer 2 support for ARP
+ */
 typedef struct {
     //Decoded info
     bool ipv4 = false;
@@ -63,10 +73,13 @@ typedef struct {
     uint body_len;
 } l3_packet;
 
+/**
+ * Packet on layer 4 for protocols TCP, UDP and ICMP/ICMPv6
+ */
 typedef struct {
-    bool tcp;
-    bool udp;
-    bool icmp;
+    bool tcp  = false;
+    bool udp  = false;
+    bool icmp = false;
 
     //headers
     struct tcphdr* tcp_hdr;
@@ -77,6 +90,9 @@ typedef struct {
     uint body_len;
 } l4_packet;
 
+/**
+ * Sniffer class. Object for sniff packets from device
+ */
 class sniffer {
     public:
         /**
@@ -168,7 +184,7 @@ class sniffer {
         l1_packet sniff();
 
     private:
-        pcap_t *interface;
-        bpf_u_int32 mask;		/* The netmask of our sniffing device */
+        pcap_t *interface;      /* Interface from we sniffing */
+        bpf_u_int32 mask;		/* The network mask of sniffing device */
         bpf_u_int32 net;        /* Net of interface */
 };

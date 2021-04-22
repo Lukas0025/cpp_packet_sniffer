@@ -11,7 +11,7 @@
 std::vector<std::string> sniffer::devices() {
     std::vector<std::string> devs_vector;
     pcap_if_t *alldevs;
-    char errbuf[PCAP_ERRBUF_SIZE+1];
+    char errbuf[PCAP_ERRBUF_SIZE + 1];
     
     if (pcap_findalldevs(&alldevs, errbuf) == -1) {
         throw std::runtime_error(errbuf);
@@ -266,5 +266,5 @@ l1_packet sniffer::sniff() {
 }
 
 sniffer::~sniffer() {
-    //free here
+    pcap_close(this->interface);
 }

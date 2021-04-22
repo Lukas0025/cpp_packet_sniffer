@@ -1,6 +1,9 @@
 build:
 	g++ -I ./include -I /usr/include/pcap ./src/* -o ipk-sniffer -lpcap
 
+debug-build:
+	g++ -I ./include -I /usr/include/pcap ./src/* -o ipk-sniffer -lpcap -g
+
 install:
 	mv ./ipk-sniffer /usr/bin
 
