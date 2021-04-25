@@ -53,7 +53,7 @@ make build
 
 ## install
 
-Remove copy `./ipk-sniffer` to `/usr/bin/ipk-sniffer`. Before run `install`, must run `build`
+move `./ipk-sniffer` to `/usr/bin/ipk-sniffer`. Before run `install`, must run `build`
 
 ```sh
 make install 
