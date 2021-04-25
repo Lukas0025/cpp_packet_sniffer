@@ -81,6 +81,15 @@ make uninstall
 * `include`    - forder with headers files
 * `src`        - forder with source codes (C++)
 
+## files
+
+* src/main.cpp - TOP file
+* src/sniffer.cpp - Sniffer implemenation file
+* include/sniffer.h - Sniffer header file
+* Makefile
+* README
+* manual.pdf
+
 ## Documenation
  
 This project is my semestral project to IPK at BUT FIT, more specific documentation you can find in documentaion file or in spec forder (CZ Only)

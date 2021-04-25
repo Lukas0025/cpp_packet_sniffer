@@ -11,7 +11,7 @@ uninstall:
 	rm  /usr/bin/ipk-sniffer
 
 tar: clean
-	tar -cf xpleva07.tar *
+	tar -cvf xpleva07.tar README Makefile include src manual.pdf
 
 clean:
 	rm -f ipk-sniffer
