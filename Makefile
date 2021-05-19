@@ -5,7 +5,7 @@ debug-build:
 	g++ -I ./include ./src/* -o ipk-sniffer -lpcap -g
 
 install:
-	mv ./ipk-sniffer /usr/bin
+	cp ./ipk-sniffer /usr/bin
 
 uninstall:
 	rm  /usr/bin/ipk-sniffer
